@@ -32,7 +32,6 @@ export const setReasoningSettingsRpc = defineRpc({
 
 export const reasoningItemDataSchema = z.object({
   text: z.string(),
-  phase: z.enum(["streaming", "complete"]),
 });
 
 export const REASONING_RENDERER_KIND = "reasoning-display";
@@ -64,13 +63,13 @@ export function formatThinkingText(text: string): string {
 
 type ReasoningTransformer = PluginTimelineTransformerContribution<"reasoning">["transform"];
 
-export const transformReasoning: ReasoningTransformer = ({ item, phase }) => ({
+export const transformReasoning: ReasoningTransformer = ({ item }) => ({
   items: [
     {
       type: "plugin",
       kind: REASONING_RENDERER_KIND,
       version: REASONING_RENDERER_VERSION,
-      data: { text: formatThinkingText(item.text), phase },
+      data: { text: formatThinkingText(item.text) },
     },
   ],
 });
