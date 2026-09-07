@@ -27,7 +27,33 @@ Paseo 0.7.2 already provides the timeline transformer and renderer APIs needed b
 
 ![Reasoning Display settings](https://raw.githubusercontent.com/mcowger/paseo-plugins/main/reasoning-display/images/reasoning-display.png)
 
-## Install on Paseo 0.7.2
+## Install
+
+For the current stable Paseo release:
+
+```bash
+paseo plugin add infectiousstupidity/paseo-reasoning-display
+```
+
+Paseo tracks the repository's default branch, so this follows `main`. To pull future updates:
+
+```bash
+paseo plugin update reasoning-display
+```
+
+## Paseo v0.8 preview
+
+Use this only with a Paseo build that supports the upcoming v0.8 plugin runtime:
+
+```bash
+paseo plugin add infectiousstupidity/paseo-reasoning-display --ref v0.8.0
+```
+
+Because `v0.8.0` is a branch, Paseo can continue tracking updates to it.
+
+## Local development
+
+Clone the repository only if you want to work on the plugin locally:
 
 ```bash
 git clone https://github.com/infectiousstupidity/paseo-reasoning-display.git
@@ -35,20 +61,6 @@ cd paseo-reasoning-display
 npm install
 npm run typecheck
 paseo plugin install "$PWD"
-paseo plugin reload reasoning-display
-```
-
-## Install the v0.8 preview
-
-Use this only when running a Paseo build that supports the upcoming v0.8 plugin runtime.
-
-```bash
-git clone --branch v0.8.0 https://github.com/infectiousstupidity/paseo-reasoning-display.git
-cd paseo-reasoning-display
-npm install
-npm run typecheck
-paseo plugin install "$PWD"
-paseo plugin reload reasoning-display
 ```
 
 ## Attribution
