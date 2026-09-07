@@ -8,14 +8,14 @@ The plugin replaces Paseo's built-in reasoning rows with expandable Markdown car
 
 | Branch | Paseo target | Status |
 | --- | --- | --- |
-| `main` / `v0.8.0` | upcoming Paseo v0.8 plugin API | preview |
-| `v0.7.2` | Paseo 0.7.2 | supported backport |
+| `main` | Paseo 0.7.2 | current stable |
+| `v0.8.0` | upcoming Paseo v0.8 plugin API | preview |
 
-Paseo v0.8 is not released yet. The `v0.8.0` branch tracks the upstream plugin's current preview architecture; use `v0.7.2` with the current stable Paseo release.
+Paseo v0.8 is not released yet. Use `main` with the current stable Paseo release. The `v0.8.0` branch tracks the upstream plugin's preview architecture until Paseo v0.8 is released.
 
 ## Paseo 0.7.2 compatibility
 
-Paseo 0.7.2 already provides the timeline transformer and renderer APIs needed by this plugin, but it does not expose the v0.8 streaming `phase` signal or `useRevealedText` helper. The `v0.7.2` branch therefore infers active streaming from reasoning text updates, considers a block settled after 1.2 seconds without an update, and locally paces newly streamed text. The card UI, settings, persistence, and reasoning transformation otherwise follow the upstream implementation.
+Paseo 0.7.2 already provides the timeline transformer and renderer APIs needed by this plugin, but it does not expose the v0.8 streaming `phase` signal or `useRevealedText` helper. The stable backport therefore infers active streaming from reasoning text updates, considers a block settled after 1.2 seconds without an update, and locally paces newly streamed text. The card UI, settings, persistence, and reasoning transformation otherwise follow the upstream implementation.
 
 ## Features
 
@@ -30,7 +30,7 @@ Paseo 0.7.2 already provides the timeline transformer and renderer APIs needed b
 ## Install on Paseo 0.7.2
 
 ```bash
-git clone --branch v0.7.2 https://github.com/infectiousstupidity/paseo-reasoning-display.git
+git clone https://github.com/infectiousstupidity/paseo-reasoning-display.git
 cd paseo-reasoning-display
 npm install
 npm run typecheck
