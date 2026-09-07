@@ -8,10 +8,10 @@ The plugin replaces Paseo's built-in reasoning rows with expandable Markdown car
 
 | Branch | Paseo target | Status |
 | --- | --- | --- |
-| `main` / `v0.8.0` | upcoming Paseo v0.8 plugin API | preview |
-| `v0.7.2` | Paseo 0.7.2 | supported backport |
+| `main` | Paseo 0.7.2 | current stable |
+| `v0.8.0` | upcoming Paseo v0.8 plugin API | preview |
 
-Paseo v0.8 is not released yet. The `v0.8.0` branch tracks the upstream plugin's current preview architecture; use `v0.7.2` with the current stable Paseo release.
+Paseo v0.8 is not released yet. Use `main` with the current stable Paseo release. This branch keeps the upstream plugin's v0.8 preview architecture available separately until Paseo v0.8 is released.
 
 ## Features
 
@@ -23,20 +23,31 @@ Paseo v0.8 is not released yet. The `v0.8.0` branch tracks the upstream plugin's
 
 ![Reasoning Display settings](https://raw.githubusercontent.com/mcowger/paseo-plugins/main/reasoning-display/images/reasoning-display.png)
 
-## Install on Paseo 0.7.2
+## Install current stable
+
+For Paseo 0.7.2, install the repository's default `main` branch:
 
 ```bash
-git clone --branch v0.7.2 https://github.com/infectiousstupidity/paseo-reasoning-display.git
-cd paseo-reasoning-display
-npm install
-npm run typecheck
-paseo plugin install "$PWD"
-paseo plugin reload reasoning-display
+paseo plugin add infectiousstupidity/paseo-reasoning-display
 ```
 
-## Install the v0.8 preview
+## Install this v0.8 preview
 
-Use this only when running a Paseo build that supports the upcoming v0.8 plugin runtime.
+Use this only with a Paseo build that supports the upcoming v0.8 plugin runtime:
+
+```bash
+paseo plugin add infectiousstupidity/paseo-reasoning-display --ref v0.8.0
+```
+
+Because `v0.8.0` is a branch, Paseo can continue tracking updates to it with:
+
+```bash
+paseo plugin update reasoning-display
+```
+
+## Local development
+
+Clone this branch only if you want to work on the preview locally:
 
 ```bash
 git clone --branch v0.8.0 https://github.com/infectiousstupidity/paseo-reasoning-display.git
@@ -44,7 +55,6 @@ cd paseo-reasoning-display
 npm install
 npm run typecheck
 paseo plugin install "$PWD"
-paseo plugin reload reasoning-display
 ```
 
 ## Attribution
