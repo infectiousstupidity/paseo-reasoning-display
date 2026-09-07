@@ -4,7 +4,7 @@ import {
   type PluginTimelineItemProps,
   useRpc,
 } from "@getpaseo/plugin";
-import { Icon, useRevealedText } from "@getpaseo/plugin/react-native";
+import { Icon } from "@getpaseo/plugin/react-native";
 import React, {
   useCallback,
   useEffect,
@@ -35,6 +35,7 @@ import {
   type ReasoningDisplayMode,
   type ReasoningSettings,
 } from "../shared/reasoning";
+import { useInferredReasoningPhase, useRevealedTextCompat } from "./reveal";
 
 const MAX_REASONING_HEIGHT = 400;
 const DISPLAY_MODE_INFO: Record<
@@ -291,7 +292,7 @@ function ThinkingBody({
   phase: "streaming" | "complete";
   styles: MarkdownStyles;
 }) {
-  const revealedText = useRevealedText(text, phase);
+  const revealedText = useRevealedTextCompat(text, phase);
   const scrollRef = useRef<ScrollView | null>(null);
   const isNearBottom = useRef(true);
 
@@ -394,7 +395,8 @@ export function ReasoningTimelineItem({
 }: PluginTimelineItemProps<ReasoningItemData>) {
   const settings = useReasoningSettings();
   const mode = settings.mode;
-  const isStreaming = item.data.phase === "streaming";
+  const phase = useInferredReasoningPhase(item.data.text);
+  const isStreaming = phase === "streaming";
   const isLatest = useIsLatestReasoning(agentId, timestamp, isStreaming);
   const preferredExpanded =
     mode === "expanded" || (mode === "expand_last" && isLatest);
@@ -406,21 +408,21 @@ export function ReasoningTimelineItem({
     logReasoning("item-mount", {
       agentId,
       timestamp: timestamp.toISOString(),
-      phase: item.data.phase,
+      phase,
     });
     return () => {
       logReasoning("item-unmount", {
         agentId,
         timestamp: timestamp.toISOString(),
-        phase: item.data.phase,
+        phase,
       });
     };
-  }, [agentId, item.data.phase, timestamp]);
+  }, [agentId, phase, timestamp]);
 
   logReasoning("item-render", {
     agentId,
     timestamp: timestamp.toISOString(),
-    phase: item.data.phase,
+    phase,
     mode,
     isStreaming,
     isLatest,
@@ -528,11 +530,7 @@ export function ReasoningTimelineItem({
       </Pressable>
       {isExpanded ? (
         <View style={detailStyle}>
-          <ThinkingBody
-            text={item.data.text}
-            phase={item.data.phase}
-            styles={styles}
-          />
+          <ThinkingBody text={item.data.text} phase={phase} styles={styles} />
         </View>
       ) : null}
     </View>
