@@ -23,7 +23,7 @@ export function useInferredReasoningPhase(text: string): "streaming" | "complete
     setStreaming(true);
     const timeout = setTimeout(() => setStreaming(false), STREAM_SETTLE_MS);
     return () => clearTimeout(timeout);
-  }, [text, textChanged]);
+  }, [text]);
 
   return textChanged || streaming ? "streaming" : "complete";
 }
