@@ -13,6 +13,10 @@ The plugin replaces Paseo's built-in reasoning rows with expandable Markdown car
 
 Paseo v0.8 is not released yet. The `v0.8.0` branch tracks the upstream plugin's current preview architecture; use `v0.7.2` with the current stable Paseo release.
 
+## Paseo 0.7.2 compatibility
+
+Paseo 0.7.2 already provides the timeline transformer and renderer APIs needed by this plugin, but it does not expose the v0.8 streaming `phase` signal or `useRevealedText` helper. The `v0.7.2` branch therefore infers active streaming from reasoning text updates, considers a block settled after 1.2 seconds without an update, and locally paces newly streamed text. The card UI, settings, persistence, and reasoning transformation otherwise follow the upstream implementation.
+
 ## Features
 
 - Smoothly rendered reasoning text while it streams.
