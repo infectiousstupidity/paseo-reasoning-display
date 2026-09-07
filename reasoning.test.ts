@@ -12,31 +12,14 @@ function reasoning(text: string) {
 }
 
 describe("reasoning display timeline plugin", () => {
-  it("replaces reasoning rows with formatted plugin items preserving streaming phase", () => {
-    expect(
-      transformReasoning({ item: reasoning("**Plan****Result**"), phase: "streaming" }),
-    ).toEqual({
+  it("replaces reasoning rows with formatted plugin items", () => {
+    expect(transformReasoning({ item: reasoning("**Plan****Result**") })).toEqual({
       items: [
         {
           type: "plugin",
           kind: "reasoning-display",
           version: 1,
-          data: { text: "**Plan**\n\n**Result**", phase: "streaming" },
-        },
-      ],
-    });
-  });
-
-  it("replaces reasoning rows with formatted plugin items for completed phase", () => {
-    expect(
-      transformReasoning({ item: reasoning("**Plan****Result**"), phase: "complete" }),
-    ).toEqual({
-      items: [
-        {
-          type: "plugin",
-          kind: "reasoning-display",
-          version: 1,
-          data: { text: "**Plan**\n\n**Result**", phase: "complete" },
+          data: { text: "**Plan**\n\n**Result**" },
         },
       ],
     });
