@@ -1,10 +1,16 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   type PluginSurfaceProps,
   type PluginTimelineItemProps,
-  useRpc,
-} from "@getpaseo/plugin";
-import { Icon } from "@getpaseo/plugin/react-native";
+  useSettings,
+} from "@getpaseo/plugin/client";
+import { Icon } from "@getpaseo/plugin/client/react-native";
+import {
+  SettingsAction,
+  SettingsCard,
+  SettingsSection,
+  SettingsSelect,
+  SettingsSwitch,
+} from "@getpaseo/plugin/client/ui";
 import React, {
   useCallback,
   useEffect,
@@ -28,36 +34,20 @@ import {
 import type { z } from "zod";
 import {
   DEFAULT_REASONING_SETTINGS,
-  getReasoningSettingsRpc,
+  reasoningDisplayModeSchema,
   reasoningItemDataSchema,
-  reasoningSettingsQueryKey,
-  setReasoningSettingsRpc,
+  reasoningPreferences,
   type ReasoningDisplayMode,
   type ReasoningSettings,
 } from "../shared/reasoning";
 import { useInferredReasoningPhase, useRevealedTextCompat } from "./reveal";
 
 const MAX_REASONING_HEIGHT = 400;
-const DISPLAY_MODE_INFO: Record<
-  ReasoningDisplayMode,
-  { label: string; description: string; icon: string }
-> = {
-  expand_last: {
-    label: "Expand last",
-    description: "Newest reasoning block starts expanded; older blocks stay collapsed.",
-    icon: "Sparkles",
-  },
-  collapsed: {
-    label: "Collapsed",
-    description: "All reasoning blocks start collapsed by default.",
-    icon: "Minimize2",
-  },
-  expanded: {
-    label: "Always expand",
-    description: "Every reasoning block starts fully expanded.",
-    icon: "Maximize2",
-  },
-};
+const DISPLAY_MODE_OPTIONS = [
+  { label: "Expand last", value: "expand_last" },
+  { label: "Collapsed", value: "collapsed" },
+  { label: "Always expand", value: "expanded" },
+] as const;
 
 const LOG_PREFIX = "[reasoning-display]";
 let isDebugLoggingEnabled = false;
@@ -85,31 +75,6 @@ interface MarkdownStyles {
   scroll: StyleProp<ViewStyle>;
 }
 
-interface ReasoningSettingsStyles {
-  screen: StyleProp<ViewStyle>;
-  title: StyleProp<TextStyle>;
-  sectionTitle: StyleProp<TextStyle>;
-  description: StyleProp<TextStyle>;
-  fieldGroup: StyleProp<ViewStyle>;
-  fieldLabel: StyleProp<TextStyle>;
-  selectTrigger: StyleProp<ViewStyle>;
-  selectTriggerOpen: StyleProp<ViewStyle>;
-  selectTriggerText: StyleProp<TextStyle>;
-  dropdownMenu: StyleProp<ViewStyle>;
-  dropdownOption: StyleProp<ViewStyle>;
-  dropdownOptionSelected: StyleProp<ViewStyle>;
-  dropdownOptionContent: StyleProp<ViewStyle>;
-  dropdownOptionLabel: StyleProp<TextStyle>;
-  dropdownOptionLabelSelected: StyleProp<TextStyle>;
-  dropdownOptionDescription: StyleProp<TextStyle>;
-  toggleCard: StyleProp<ViewStyle>;
-  toggleCardActive: StyleProp<ViewStyle>;
-  toggleTextContainer: StyleProp<ViewStyle>;
-  toggleTitle: StyleProp<TextStyle>;
-  toggleDescription: StyleProp<TextStyle>;
-  status: StyleProp<TextStyle>;
-}
-
 const latestReasoningTimestamps = new Map<string, number>();
 const latestReasoningListeners = new Set<() => void>();
 
@@ -132,14 +97,10 @@ function subscribeLatestReasoning(listener: () => void): () => void {
 }
 
 function useReasoningSettings(): ReasoningSettings {
-  const getSettings = useRpc(getReasoningSettingsRpc);
-  const { data } = useQuery({
-    queryKey: reasoningSettingsQueryKey,
-    queryFn: () => getSettings({}),
-  });
-  const settings = data ?? DEFAULT_REASONING_SETTINGS;
-  isDebugLoggingEnabled = Boolean(settings.debug);
-  return settings;
+  const settings = useSettings(reasoningPreferences);
+  const values = settings.status === "ready" ? settings.values : DEFAULT_REASONING_SETTINGS;
+  isDebugLoggingEnabled = settings.status === "ready" && Boolean(values.debug);
+  return values;
 }
 
 function useIsLatestReasoning(agentId: string, timestamp: Date, isStreaming: boolean): boolean {
@@ -154,8 +115,7 @@ function useIsLatestReasoning(agentId: string, timestamp: Date, isStreaming: boo
     () => 0,
   );
 
-  const isLatest = isStreaming || (latestTime > 0 && itemTime >= latestTime);
-  return isLatest;
+  return isStreaming || (latestTime > 0 && itemTime >= latestTime);
 }
 
 function renderInlineMarkdown(text: string, styles: MarkdownStyles): ReactNode[] {
@@ -398,8 +358,7 @@ export function ReasoningTimelineItem({
   const phase = useInferredReasoningPhase(item.data.text);
   const isStreaming = phase === "streaming";
   const isLatest = useIsLatestReasoning(agentId, timestamp, isStreaming);
-  const preferredExpanded =
-    mode === "expanded" || (mode === "expand_last" && isLatest);
+  const preferredExpanded = mode === "expanded" || (mode === "expand_last" && isLatest);
   const [userExpanded, setUserExpanded] = useState<boolean | null>(null);
   const isExpanded = isStreaming || (userExpanded !== null ? userExpanded : preferredExpanded);
   const styles = useMarkdownStyles(theme);
@@ -537,303 +496,75 @@ export function ReasoningTimelineItem({
   );
 }
 
-export function ReasoningDisplaySettings({ theme, layout }: PluginSurfaceProps) {
-  const getSettings = useRpc(getReasoningSettingsRpc);
-  const setSettings = useRpc(setReasoningSettingsRpc);
-  const queryClient = useQueryClient();
-  const { data, isPending } = useQuery({
-    queryKey: reasoningSettingsQueryKey,
-    queryFn: () => getSettings({}),
-  });
-  const mutation = useMutation({
-    mutationFn: setSettings,
-    onSuccess: (settings) => queryClient.setQueryData(reasoningSettingsQueryKey, settings),
-  });
-  const settings = data ?? DEFAULT_REASONING_SETTINGS;
-  const mode = settings.mode;
-  const debug = Boolean(settings.debug);
-
-  const styles = useMemo<ReasoningSettingsStyles>(
-    () => ({
-      screen: {
-        backgroundColor: theme.colors.surface0,
-        flex: 1,
-        gap: 20,
-        maxWidth: 640,
-        padding: layout.compact ? 16 : 24,
-      },
-      title: {
-        color: theme.colors.foreground,
-        fontSize: layout.compact ? 20 : 24,
-        fontWeight: "700" as const,
-      },
-      sectionTitle: {
-        color: theme.colors.foreground,
-        fontSize: layout.compact ? 15 : 16,
-        fontWeight: "600" as const,
-      },
-      description: {
-        color: theme.colors.foregroundMuted,
-        fontSize: 13,
-        lineHeight: 18,
-      },
-      fieldGroup: {
-        gap: 8,
-      },
-      fieldLabel: {
-        color: theme.colors.foreground,
-        fontSize: 14,
-        fontWeight: "600" as const,
-      },
-      selectTrigger: {
-        alignItems: "center" as const,
-        backgroundColor: theme.colors.surface1,
-        borderColor: theme.colors.border,
-        borderRadius: 8,
-        borderWidth: 1,
-        flexDirection: "row" as const,
-        justifyContent: "space-between" as const,
-        paddingHorizontal: 14,
-        paddingVertical: 12,
-      },
-      selectTriggerOpen: {
-        borderColor: theme.colors.accent,
-      },
-      selectTriggerText: {
-        color: theme.colors.foreground,
-        fontSize: 14,
-        fontWeight: "500" as const,
-      },
-      dropdownMenu: {
-        backgroundColor: theme.colors.surface1,
-        borderColor: theme.colors.border,
-        borderRadius: 8,
-        borderWidth: 1,
-        marginTop: 4,
-        overflow: "hidden" as const,
-      },
-      dropdownOption: {
-        alignItems: "center" as const,
-        backgroundColor: theme.colors.surface1,
-        flexDirection: "row" as const,
-        justifyContent: "space-between" as const,
-        paddingHorizontal: 14,
-        paddingVertical: 12,
-      },
-      dropdownOptionSelected: {
-        backgroundColor: theme.colors.surface2,
-      },
-      dropdownOptionContent: {
-        flex: 1,
-        gap: 2,
-      },
-      dropdownOptionLabel: {
-        color: theme.colors.foreground,
-        fontSize: 14,
-        fontWeight: "500" as const,
-      },
-      dropdownOptionLabelSelected: {
-        color: theme.colors.accent,
-        fontWeight: "600" as const,
-      },
-      dropdownOptionDescription: {
-        color: theme.colors.foregroundMuted,
-        fontSize: 12,
-      },
-      toggleCard: {
-        alignItems: "center" as const,
-        backgroundColor: theme.colors.surface1,
-        borderColor: theme.colors.border,
-        borderRadius: 8,
-        borderWidth: 1,
-        flexDirection: "row" as const,
-        justifyContent: "space-between" as const,
-        paddingHorizontal: 14,
-        paddingVertical: 12,
-      },
-      toggleCardActive: {
-        borderColor: theme.colors.accent,
-      },
-      toggleTextContainer: {
-        flex: 1,
-        gap: 2,
-        paddingRight: 12,
-      },
-      toggleTitle: {
-        color: theme.colors.foreground,
-        fontSize: 14,
-        fontWeight: "500" as const,
-      },
-      toggleDescription: {
-        color: theme.colors.foregroundMuted,
-        fontSize: 12,
-        lineHeight: 16,
-      },
-      status: {
-        color: theme.colors.statusDanger,
-        fontSize: 13,
-      },
-    }),
-    [layout.compact, theme],
+export function ReasoningDisplaySettings({ theme }: PluginSurfaceProps) {
+  const settings = useSettings(reasoningPreferences);
+  const messageStyle = useMemo(() => ({ color: theme.colors.foreground }), [theme.colors.foreground]);
+  const errorStyle = useMemo(
+    () => ({ color: theme.colors.statusDanger }),
+    [theme.colors.statusDanger],
   );
 
-  const handleModeChange = useCallback(
-    (nextMode: ReasoningDisplayMode) => mutation.mutate({ mode: nextMode, debug }),
-    [debug, mutation],
-  );
-  const handleDebugToggle = useCallback(
-    () => mutation.mutate({ mode, debug: !debug }),
-    [debug, mode, mutation],
-  );
+  if (settings.status === "loading") {
+    return <Text style={messageStyle}>Loading settings…</Text>;
+  }
 
-  return (
-    <View style={styles.screen}>
-      <Text style={styles.title}>Reasoning Display</Text>
-      <Text style={styles.description}>
-        Configure how model reasoning and chain-of-thought blocks appear in the agent timeline.
-      </Text>
-
-      <ReasoningSelectDropdown
-        disabled={isPending || mutation.isPending}
-        mode={mode}
-        onSelect={handleModeChange}
-        styles={styles}
-        theme={theme}
-      />
-
-      <View style={styles.fieldGroup}>
-        <Text style={styles.sectionTitle}>Diagnostics</Text>
-        <Text style={styles.description}>
-          Output verbose state transition logs to the developer console for troubleshooting.
+  if (settings.status !== "ready") {
+    return (
+      <SettingsSection title="Reasoning Display">
+        <Text accessibilityRole="alert" style={errorStyle}>
+          {settings.error}
         </Text>
-        <Pressable
-          accessibilityLabel={`Debug logging, ${debug ? "enabled" : "disabled"}`}
-          accessibilityRole="switch"
-          aria-checked={debug}
-          disabled={isPending || mutation.isPending}
-          onPress={handleDebugToggle}
-          style={[styles.toggleCard, debug && styles.toggleCardActive]}
-        >
-          <View style={styles.toggleTextContainer}>
-            <Text style={styles.toggleTitle}>Debug logging</Text>
-            <Text style={styles.toggleDescription}>
-              Log timeline render ticks, streaming phase transitions, and expansion events
-            </Text>
-          </View>
-          <View
-            style={{
-              width: 22,
-              height: 22,
-              borderRadius: 6,
-              borderWidth: 1.5,
-              borderColor: debug ? theme.colors.accent : theme.colors.border,
-              backgroundColor: debug ? theme.colors.accent : "transparent",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {debug ? <Icon color={theme.colors.accentForeground} name="Check" size={14} /> : null}
-          </View>
-        </Pressable>
-      </View>
+        <SettingsAction label="Try again" actionLabel="Reload" onPress={settings.reload} />
+        {settings.status === "invalid" ? (
+          <SettingsAction
+            label="Restore default settings"
+            actionLabel="Reset"
+            onPress={settings.reset}
+          />
+        ) : null}
+      </SettingsSection>
+    );
+  }
 
-      {mutation.error ? <Text style={styles.status}>{mutation.error.message}</Text> : null}
-    </View>
-  );
-}
-
-function ReasoningSelectDropdown({
-  disabled,
-  mode,
-  onSelect,
-  theme,
-  styles,
-}: {
-  disabled: boolean;
-  mode: ReasoningDisplayMode;
-  onSelect: (mode: ReasoningDisplayMode) => void;
-  theme: PluginSurfaceProps["theme"];
-  styles: ReasoningSettingsStyles;
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-  const toggleOpen = useCallback(() => setIsOpen((prev) => !prev), []);
-  const selectedInfo = DISPLAY_MODE_INFO[mode];
-
-  const handleSelectOption = useCallback(
-    (optionMode: ReasoningDisplayMode) => {
-      onSelect(optionMode);
-      setIsOpen(false);
-    },
-    [onSelect],
-  );
+  const changeMode = (value: string) => {
+    const parsed = reasoningDisplayModeSchema.safeParse(value);
+    if (!parsed.success) return;
+    void settings.save({ ...settings.values, mode: parsed.data }, settings.revision);
+  };
+  const changeDebug = (debug: boolean) => {
+    void settings.save({ ...settings.values, debug }, settings.revision);
+  };
 
   return (
-    <View style={styles.fieldGroup}>
-      <Text style={styles.fieldLabel}>Display mode</Text>
-      <Pressable
-        accessibilityLabel={`Display mode: ${selectedInfo.label}. Click to ${isOpen ? "close" : "open"} dropdown`}
-        accessibilityRole="combobox"
-        aria-expanded={isOpen}
-        disabled={disabled}
-        onPress={toggleOpen}
-        style={[styles.selectTrigger, isOpen && styles.selectTriggerOpen]}
-      >
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}>
-          <Icon color={theme.colors.accent} name={selectedInfo.icon} size={16} />
-          <Text style={styles.selectTriggerText}>{selectedInfo.label}</Text>
-        </View>
-        <Icon
-          color={theme.colors.foregroundMuted}
-          name={isOpen ? "ChevronUp" : "ChevronDown"}
-          size={16}
-        />
-      </Pressable>
-
-      {isOpen ? (
-        <View style={styles.dropdownMenu}>
-          {(["expand_last", "collapsed", "expanded"] as const).map((optionMode, index) => {
-            const isSelected = mode === optionMode;
-            const optionInfo = DISPLAY_MODE_INFO[optionMode];
-            return (
-              <Pressable
-                key={optionMode}
-                accessibilityLabel={`${optionInfo.label}${isSelected ? ", selected" : ""}`}
-                accessibilityRole="button"
-                onPress={() => handleSelectOption(optionMode)}
-                style={[
-                  styles.dropdownOption,
-                  isSelected && styles.dropdownOptionSelected,
-                  index > 0 && { borderTopWidth: 1, borderTopColor: theme.colors.border },
-                ]}
-              >
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}>
-                  <Icon
-                    color={isSelected ? theme.colors.accent : theme.colors.foregroundMuted}
-                    name={optionInfo.icon}
-                    size={16}
-                  />
-                  <View style={styles.dropdownOptionContent}>
-                    <Text
-                      style={[
-                        styles.dropdownOptionLabel,
-                        isSelected && styles.dropdownOptionLabelSelected,
-                      ]}
-                    >
-                      {optionInfo.label}
-                    </Text>
-                    <Text style={styles.dropdownOptionDescription}>
-                      {optionInfo.description}
-                    </Text>
-                  </View>
-                </View>
-                {isSelected ? (
-                  <Icon color={theme.colors.accent} name="Check" size={16} />
-                ) : null}
-              </Pressable>
-            );
-          })}
-        </View>
-      ) : null}
-    </View>
+    <>
+      <SettingsSection title="Display">
+        <SettingsCard>
+          <SettingsSelect
+            label="Display mode"
+            hint="Choose which reasoning blocks start expanded."
+            value={settings.values.mode}
+            options={DISPLAY_MODE_OPTIONS}
+            disabled={settings.saving}
+            onValueChange={changeMode}
+          />
+        </SettingsCard>
+      </SettingsSection>
+      <SettingsSection title="Diagnostics">
+        <SettingsCard>
+          <SettingsSwitch
+            label="Debug logging"
+            hint="Log timeline render ticks, streaming phase transitions, and expansion events."
+            value={settings.values.debug}
+            disabled={settings.saving}
+            onValueChange={changeDebug}
+          />
+        </SettingsCard>
+        {settings.saveError ? (
+          <Text accessibilityRole="alert" style={errorStyle}>
+            {settings.saveError}
+          </Text>
+        ) : null}
+      </SettingsSection>
+    </>
   );
 }

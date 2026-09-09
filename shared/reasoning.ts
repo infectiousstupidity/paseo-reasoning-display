@@ -1,5 +1,4 @@
-import type { PluginTimelineTransformerContribution } from "@getpaseo/plugin";
-import { defineRpc } from "@getpaseo/plugin";
+import { defineSettings, type PluginTimelineTransformerContribution } from "@getpaseo/plugin";
 import { z } from "zod";
 
 export const reasoningDisplayModeSchema = z.enum(["collapsed", "expand_last", "expanded"]);
@@ -18,16 +17,11 @@ export const reasoningSettingsSchema = z.object({
 });
 export type ReasoningSettings = z.output<typeof reasoningSettingsSchema>;
 
-export const getReasoningSettingsRpc = defineRpc({
-  name: "reasoning-display.settings.get",
-  input: z.object({}),
-  output: reasoningSettingsSchema,
-});
-
-export const setReasoningSettingsRpc = defineRpc({
-  name: "reasoning-display.settings.set",
-  input: reasoningSettingsSchema,
-  output: reasoningSettingsSchema,
+export const reasoningPreferences = defineSettings({
+  id: "display",
+  scope: "host",
+  version: 1,
+  schema: reasoningSettingsSchema,
 });
 
 export const reasoningItemDataSchema = z.object({
@@ -36,11 +30,6 @@ export const reasoningItemDataSchema = z.object({
 
 export const REASONING_RENDERER_KIND = "reasoning-display";
 export const REASONING_RENDERER_VERSION = 1;
-export const reasoningSettingsQueryKey = ["reasoning-display", "settings"] as const;
-
-export function getLatestReasoningQueryKey(agentId: string) {
-  return ["reasoning-display", "latest-reasoning", agentId] as const;
-}
 
 export function getReasoningExpansionState(
   preferredExpanded: boolean,

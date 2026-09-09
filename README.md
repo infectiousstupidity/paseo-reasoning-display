@@ -1,70 +1,51 @@
 # Paseo Reasoning Display
 
-A compatibility fork of the original [Reasoning Display plugin](https://github.com/mcowger/paseo-plugins/tree/main/reasoning-display) for Paseo.
-
-The plugin replaces Paseo's built-in reasoning rows with expandable Markdown cards and adds controls for how reasoning blocks open by default.
-
-## Paseo versions
-
-| Branch | Paseo target | Status |
-| --- | --- | --- |
-| `main` | Paseo 0.7.2 | current stable |
-| `v0.8.0` | upcoming Paseo v0.8 plugin API | preview |
-
-Paseo v0.8 is not released yet. Use `main` with the current stable Paseo release. The `v0.8.0` branch tracks the upstream plugin's preview architecture until Paseo v0.8 is released.
-
-## Paseo 0.7.2 compatibility
-
-Paseo 0.7.2 already provides the timeline transformer and renderer APIs needed by this plugin, but it does not expose the v0.8 streaming `phase` signal or `useRevealedText` helper. The stable backport therefore infers active streaming from reasoning text updates, considers a block settled after 1.2 seconds without an update, and locally paces newly streamed text. The card UI, settings, persistence, and reasoning transformation otherwise follow the upstream implementation.
+A Paseo 0.8 plugin that replaces built-in reasoning rows with expandable Markdown cards and lets you control how reasoning blocks open by default.
 
 ## Features
 
 - Smoothly rendered reasoning text while it streams.
-- Collapsible reasoning cards styled like Paseo's timeline cards.
+- Collapsible reasoning cards styled for Paseo's timeline.
 - Three display modes: **Expand last**, **Collapsed**, and **Always expand**.
-- Persistent settings stored under `$PASEO_HOME/plugin-data/reasoning-display.json`.
+- Host-scoped settings stored by Paseo's native plugin settings system.
 - Optional debug logging for reasoning render and expansion state.
 
-![Reasoning Display settings](https://raw.githubusercontent.com/mcowger/paseo-plugins/main/reasoning-display/images/reasoning-display.png)
+## Requirements
+
+Paseo 0.8 or newer.
 
 ## Install
-
-For the current stable Paseo release:
 
 ```bash
 paseo plugin add infectiousstupidity/paseo-reasoning-display
 ```
 
-Paseo tracks the repository's default branch, so this follows `main`. To pull future updates:
+The default branch is `main`, which targets Paseo 0.8. To pull future updates:
 
 ```bash
 paseo plugin update reasoning-display
 ```
 
-## Paseo v0.8 preview
-
-Use this only with a Paseo build that supports the upcoming v0.8 plugin runtime:
-
-```bash
-paseo plugin add infectiousstupidity/paseo-reasoning-display --ref v0.8.0
-```
-
-Because `v0.8.0` is a branch, Paseo can continue tracking updates to it.
+Configure the plugin under **Settings → Plugins → Reasoning Display**.
 
 ## Local development
-
-Clone the repository only if you want to work on the plugin locally:
 
 ```bash
 git clone https://github.com/infectiousstupidity/paseo-reasoning-display.git
 cd paseo-reasoning-display
 npm install
 npm run typecheck
+npm run lint
+npm test
 paseo plugin install "$PWD"
+paseo plugin reload reasoning-display
+paseo plugin ls reasoning-display
 ```
+
+Paseo owns settings persistence in 0.8. An old `$PASEO_HOME/plugin-data/reasoning-display.json` file from the 0.7.2 compatibility version can be left in place; the plugin no longer reads or writes it.
 
 ## Attribution
 
-The original plugin, feature design, and implementation are by [@mcowger](https://github.com/mcowger) in [`mcowger/paseo-plugins`](https://github.com/mcowger/paseo-plugins/tree/main/reasoning-display). This repository exists to maintain version-specific compatibility and does not claim authorship of the original plugin.
+The original plugin, feature design, and implementation are by [@mcowger](https://github.com/mcowger) in [`mcowger/paseo-plugins`](https://github.com/mcowger/paseo-plugins/tree/main/reasoning-display).
 
 The upstream repository did not contain a license file when this fork was created. Attribution does not replace a software license; check the upstream repository for any later licensing terms before redistributing the code.

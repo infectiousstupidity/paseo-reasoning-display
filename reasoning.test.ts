@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   formatThinkingText,
-  getLatestReasoningQueryKey,
   getReasoningExpansionState,
   reasoningSettingsSchema,
   transformReasoning,
@@ -43,19 +42,14 @@ describe("reasoning display timeline plugin", () => {
     expect(getReasoningExpansionState(false, false)).toBe(false);
   });
 
-  it("uses a stable query key for latest reasoning", () => {
-    expect(getLatestReasoningQueryKey("agent-1")).toEqual([
-      "reasoning-display",
-      "latest-reasoning",
-      "agent-1",
-    ]);
-  });
-
-  it("defaults debug to false in settings schema", () => {
+  it("applies the complete settings defaults", () => {
     expect(reasoningSettingsSchema.parse({})).toEqual({
       mode: "expand_last",
       debug: false,
     });
+  });
+
+  it("accepts every supported settings value", () => {
     expect(reasoningSettingsSchema.parse({ mode: "collapsed" })).toEqual({
       mode: "collapsed",
       debug: false,
@@ -64,5 +58,9 @@ describe("reasoning display timeline plugin", () => {
       mode: "expanded",
       debug: true,
     });
+  });
+
+  it("rejects an invalid display mode", () => {
+    expect(reasoningSettingsSchema.safeParse({ mode: "sometimes" }).success).toBe(false);
   });
 });
