@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { transformReasoning } from "./client/transform";
 import {
   formatThinkingText,
   getReasoningExpansionState,
   reasoningSettingsSchema,
-  transformReasoning,
 } from "./shared/reasoning";
 
 function reasoning(text: string) {
@@ -12,7 +12,9 @@ function reasoning(text: string) {
 
 describe("reasoning display timeline plugin", () => {
   it("replaces reasoning rows with formatted plugin items", () => {
-    expect(transformReasoning({ item: reasoning("**Plan****Result**") })).toEqual({
+    expect(
+      transformReasoning({ item: reasoning("**Plan****Result**"), phase: "complete" }),
+    ).toEqual({
       items: [
         {
           type: "plugin",
