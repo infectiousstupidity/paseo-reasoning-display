@@ -1,4 +1,5 @@
-import { defineSettings, type PluginTimelineTransformerContribution } from "@getpaseo/plugin";
+import { defineSettings } from "@getpaseo/plugin";
+import type { PluginTimelineTransformerContribution } from "@getpaseo/plugin/client";
 import { z } from "zod";
 
 export const reasoningDisplayModeSchema = z.enum(["collapsed", "expand_last", "expanded"]);
