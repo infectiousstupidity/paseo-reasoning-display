@@ -1,5 +1,4 @@
 import { defineSettings } from "@getpaseo/plugin";
-import type { PluginTimelineTransformerContribution } from "@getpaseo/plugin/client";
 import { z } from "zod";
 
 export const reasoningDisplayModeSchema = z.enum(["collapsed", "expand_last", "expanded"]);
@@ -50,16 +49,3 @@ export function formatThinkingText(text: string): string {
     })
     .join("");
 }
-
-type ReasoningTransformer = PluginTimelineTransformerContribution<"reasoning">["transform"];
-
-export const transformReasoning: ReasoningTransformer = ({ item }) => ({
-  items: [
-    {
-      type: "plugin",
-      kind: REASONING_RENDERER_KIND,
-      version: REASONING_RENDERER_VERSION,
-      data: { text: formatThinkingText(item.text) },
-    },
-  ],
-});
