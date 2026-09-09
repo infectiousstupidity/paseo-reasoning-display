@@ -4,9 +4,9 @@ const STREAM_SETTLE_MS = 1200;
 const REVEAL_TICK_MS = 16;
 
 /**
- * Paseo 0.7.2 does not expose the timeline transform phase that v0.8 provides.
  * Treat a reasoning row as streaming while its text is actively changing, then
- * consider it complete after a short quiet period.
+ * consider it complete after a short quiet period. This keeps the renderer
+ * payload limited to the existing { text } contract.
  */
 export function useInferredReasoningPhase(text: string): "streaming" | "complete" {
   const previousTextRef = useRef(text);
@@ -29,8 +29,8 @@ export function useInferredReasoningPhase(text: string): "streaming" | "complete
 }
 
 /**
- * Local equivalent of the v0.8 useRevealedText helper. Existing text stays
- * visible immediately; newly streamed text is revealed over a few frames.
+ * Keep existing text visible immediately and reveal newly streamed text over a
+ * few frames without changing the timeline transformer output contract.
  */
 export function useRevealedTextCompat(
   text: string,

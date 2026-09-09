@@ -1,32 +1,25 @@
-import type { PluginContext } from "@getpaseo/plugin";
+import type { PluginClientContext } from "@getpaseo/plugin/client";
 import { ReasoningDisplaySettings, ReasoningTimelineItem } from "./client/reasoning";
-import { getReasoningSettings, setReasoningSettings } from "./server/reasoning";
 import {
   REASONING_RENDERER_KIND,
   REASONING_RENDERER_VERSION,
-  getReasoningSettingsRpc,
   reasoningItemDataSchema,
-  setReasoningSettingsRpc,
   transformReasoning,
 } from "./shared/reasoning";
 
-export default function contribute(plugin: PluginContext) {
-  plugin.handle(getReasoningSettingsRpc, getReasoningSettings);
-  plugin.handle(setReasoningSettingsRpc, setReasoningSettings);
-
-  plugin.addSurface("settings", ReasoningDisplaySettings);
-  plugin.addSidebarItem({
-    id: "settings",
+export default function contribute(client: PluginClientContext) {
+  client.addSettingsScreen({
+    id: "display",
     title: "Reasoning Display",
     icon: "Brain",
-    surface: "settings",
+    Component: ReasoningDisplaySettings,
   });
-  plugin.addTimelineTransformer({
+  client.addTimelineTransformer({
     id: "reasoning-display",
     query: { itemType: "reasoning" },
     transform: transformReasoning,
   });
-  plugin.addTimelineRenderer({
+  client.addTimelineRenderer({
     kind: REASONING_RENDERER_KIND,
     version: REASONING_RENDERER_VERSION,
     schema: reasoningItemDataSchema,
